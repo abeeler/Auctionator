@@ -367,6 +367,15 @@ function AuctionatorBuyAuctionsDataProviderMixin:SetSelectedIndex(newSelectedInd
   end
 end
 
+function AuctionatorBuyAuctionsDataProviderMixin:GetFirstUndercutCancellation()
+  local seenNotYours = false
+  for index = self:GetSelectedIndex(), #self.curentResults do
+    if self.currentResults[index].isOwned
+    local result = self.currentResults[index]
+    if result
+  end
+end
+
 function AuctionatorBuyAuctionsDataProviderMixin:UniqueKey(entry)
   return tostring(entry)
 end
