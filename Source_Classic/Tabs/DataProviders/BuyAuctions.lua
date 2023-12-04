@@ -368,11 +368,25 @@ function AuctionatorBuyAuctionsDataProviderMixin:SetSelectedIndex(newSelectedInd
 end
 
 function AuctionatorBuyAuctionsDataProviderMixin:GetFirstUndercutCancellation()
-  local seenNotYours = false
-  for index = self:GetSelectedIndex(), #self.curentResults do
-    if self.currentResults[index].isOwned
+  if self.currentResults == nil or #self.currentResults == 0 then
+    return
+  end
+
+  local stepsBehind = 0
+  local index = 1
+  while stepsBehind < Auctionator.Config.Get(Auctionator.Config.Options.UNDERCUT_ITEMS_AHEAD) do
     local result = self.currentResults[index]
-    if result
+    if not result.isOwned then
+      stepsBehind = stepsBehind + result.stackSize * result.numStacks
+    end
+    index = index + 1
+  end
+
+  while index <= #self.currentResults and (not self.currentResults[index].isOwned or self.currentResults[index].numStacks == 0) do
+    index = index + 1
+  end
+  if index <= #self.currentResults then
+    return self.currentResults[index]
   end
 end
 

@@ -77,7 +77,12 @@ function AuctionatorBuyCurrentPricesFrameMixin:OnEvent(eventName, ...)
 end
 
 function AuctionatorBuyCurrentPricesFrameMixin:UpdateButtons()
-  self.CancelButton:SetEnabled(self.selectedAuctionData ~= nil and self.selectedAuctionData.isOwned and self.selectedAuctionData.numStacks > 0 and Auctionator.AH.IsNotThrottled())
+  local cancelEnabledBasic = Auctionator.AH.IsNotThrottled()
+  local cancelSelected = self.selectedAuctionData ~= nil and self.selectedAuctionData.isOwned and self.selectedAuctionData.numStacks > 0
+  local cancelUndercut = self.SearchDataProvider:GetFirstUndercutCancellation()
+
+  self.CancelButton:SetEnabled(cancelEnabledBasic and (cancelSelected or cancelUndercut))
+
   self.BuyButton:Disable()
 
   self.BuyButton:SetEnabled(self.selectedAuctionData ~= nil and not self.selectedAuctionData.isOwned and self.selectedAuctionData.stackPrice ~= nil and GetMoney() >= self.selectedAuctionData.stackPrice)
@@ -106,9 +111,7 @@ function AuctionatorBuyCurrentPricesFrameMixin:ReceiveEvent(eventName, eventData
   end
 end
 
-function AuctionatorBuyCurrentPricesFrameMixin:GetOwnerAuctionIndex()
-  local auction = self.selectedAuctionData
-
+function AuctionatorBuyCurrentPricesFrameMixin:GetOwnerAuctionIndex(auction)
   local indexes = {}
   for index = 1, GetNumAuctionItems("owner") do
     local info = { GetAuctionItemInfo("owner", index) }
@@ -128,18 +131,22 @@ function AuctionatorBuyCurrentPricesFrameMixin:GetOwnerAuctionIndex()
 end
 
 function AuctionatorBuyCurrentPricesFrameMixin:CancelFocussed()
-  local indexes = self:GetOwnerAuctionIndex()
-  if #indexes == 0 then
-    if #indexes < self.selectedAuctionData.numStacks then
-      Auctionator.Utilities.Message(AUCTIONATOR_L_ERROR_REOPEN_AUCTION_HOUSE)
-    end
-    self:Reset()
-    self:DoRefresh()
-  else
+  if self.selectedAuctionData.isOwned and #self:GetOwnerAuctionIndex(self.selectedAuctionData) > 0 then
     Auctionator.EventBus:Fire(self, Auctionator.Cancelling.Events.RequestCancel, self.selectedAuctionData)
+    self.lastCancelData = self.selectedAuctionData --Used to set amount left after cancelling
+    self:LoadForCancelling()
+  else
+    local cancelAuction = self.SearchDataProvider:GetFirstUndercutCancellation()
+    self.lastCancelData = cancelAuction --Used to set amount left after cancelling
+    local indexes = self:GetOwnerAuctionIndex(cancelAuction)
+    if #indexes > 0 then
+      Auctionator.EventBus:Fire(self, Auctionator.Cancelling.Events.RequestCancel, cancelAuction)
+
+    else
+      self:Reset()
+      self:DoRefresh()
+    end
   end
-  self.lastCancelData = self.selectedAuctionData --Used to set amount left after cancelling
-  self:LoadForCancelling()
 end
 
 function AuctionatorBuyCurrentPricesFrameMixin:LoadForCancelling()
