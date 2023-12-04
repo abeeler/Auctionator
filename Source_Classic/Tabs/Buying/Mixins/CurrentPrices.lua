@@ -131,7 +131,7 @@ function AuctionatorBuyCurrentPricesFrameMixin:GetOwnerAuctionIndex(auction)
 end
 
 function AuctionatorBuyCurrentPricesFrameMixin:CancelFocussed()
-  if self.selectedAuctionData.isOwned and #self:GetOwnerAuctionIndex(self.selectedAuctionData) > 0 then
+  if self.selectedAuctionData and self.selectedAuctionData.isOwned and #self:GetOwnerAuctionIndex(self.selectedAuctionData) > 0 then
     Auctionator.EventBus:Fire(self, Auctionator.Cancelling.Events.RequestCancel, self.selectedAuctionData)
     self.lastCancelData = self.selectedAuctionData --Used to set amount left after cancelling
     self:LoadForCancelling()

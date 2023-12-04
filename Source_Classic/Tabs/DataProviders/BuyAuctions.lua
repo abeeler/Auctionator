@@ -374,6 +374,11 @@ function AuctionatorBuyAuctionsDataProviderMixin:GetFirstUndercutCancellation()
 
   local stepsBehind = 0
   local index = 1
+
+  while index <= #self.currentResults and self.currentResults[index].isOwned do
+    index = index + 1
+  end
+
   while stepsBehind < Auctionator.Config.Get(Auctionator.Config.Options.UNDERCUT_ITEMS_AHEAD) do
     local result = self.currentResults[index]
     if not result.isOwned then
